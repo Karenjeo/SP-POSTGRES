@@ -38,19 +38,31 @@ public class apartamentoC {
     @PostMapping("agregarA")
     public apartamento create(@Valid @RequestBody apartamento apartamento, BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
-            // Manejar errores de validación
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Datos de apartamento no válidos", new ValidationException("Validation Failed"));
         }
 
         try {
-            return apartamentoS.save(apartamento);
-        } catch (Exception e) {
+            int numero_bano = Integer.parseInt(apartamento.getNumero_bano());
+            if (numero_bano < 0) {
+                // Send the message to the dead letter queue before throwing the exception
+                rabbitTemplate.convertAndSend(RabbitMQConfigBinding.DEAD_LETTER_EXCHANGE, "dead_letter", apartamento);
+                throw new InvalidApartamentoException("numero_bano no puede ser negativo");
+            }
+
+            apartamento savedApartamento = apartamentoS.save(apartamento);
+            rabbitTemplate.convertAndSend("Apartamento", savedApartamento);
+            return savedApartamento;
+        } catch (InvalidApartamentoException e) {
+            // Handle specific exception
             e.printStackTrace();
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Error al procesar el apartamento", e);
+        } catch (Exception e) {
+            // Handle other exceptions and send to dead letter queue
+            e.printStackTrace();
+            rabbitTemplate.convertAndSend(RabbitMQConfigBinding.DEAD_LETTER_EXCHANGE, "dead_letter", apartamento);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error al guardar el apartamento", e);
         }
     }
-
-
 
     @DeleteMapping("/{id_apartamento}")
     public void deleteById(@PathVariable Long id_apartamento) {
@@ -59,15 +71,13 @@ public class apartamentoC {
     //http://localhost:8080/apiR/2
     @PutMapping("/{id_apartamento}")
     public apartamento update(@PathVariable Long id_apartamento, @RequestBody apartamento apartamento) {
-        // Verificar si el usuario existe
-        Optional<apartamento> existingUsuario = apartamentoS.findById(id_apartamento);
+         Optional<apartamento> existingUsuario = apartamentoS.findById(id_apartamento);
 
         if (existingUsuario.isPresent()) {
             apartamento.setId_apartamento(id_apartamento);
             return apartamentoS.save(apartamento);
         } else {
-            // Manejar el caso en que el rol no existe
-            return null;
+             return null;
         }
     }
 }
