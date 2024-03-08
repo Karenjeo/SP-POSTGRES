@@ -27,3 +27,13 @@ services:
 # volumes:
 #   odoo-db-data:
 #   odoo-web-data:
+
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"  # Puerto para la comunicación AMQP
+      - "15672:15672"  # Puerto para la interfaz de gestión de RabbitMQ
+    environment:
+      RABBITMQ_DEFAULT_USER: your_username
+      RABBITMQ_DEFAULT_PASS: your_password

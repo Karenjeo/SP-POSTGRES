@@ -5,6 +5,7 @@ import com.example.test.modelos.apartamento;
 import com.example.test.servicios.apartamentoS;
 import jakarta.validation.Valid;
 import jakarta.validation.ValidationException;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.BindingResult;
@@ -45,21 +46,21 @@ public class apartamentoC {
             int numero_bano = Integer.parseInt(apartamento.getNumero_bano());
             if (numero_bano < 0) {
                 // Send the message to the dead letter queue before throwing the exception
-                rabbitTemplate.convertAndSend(RabbitMQConfigBinding.DEAD_LETTER_EXCHANGE, "dead_letter", apartamento);
-                throw new InvalidApartamentoException("numero_bano no puede ser negativo");
+                rabbitTemplate.convertAndSend(com.example.proyectou2.config.RabbitMQConfigBinding.DEAD_LETTER_EXCHANGE, "dead_letter", apartamento);
+                throw new com.example.proyectou2.excepciones.InvalidApartamentoException("numero_bano no puede ser negativo");
             }
 
             apartamento savedApartamento = apartamentoS.save(apartamento);
             rabbitTemplate.convertAndSend("Apartamento", savedApartamento);
             return savedApartamento;
-        } catch (InvalidApartamentoException e) {
+        } catch (com.example.proyectou2.excepciones.InvalidApartamentoException e) {
             // Handle specific exception
             e.printStackTrace();
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Error al procesar el apartamento", e);
         } catch (Exception e) {
             // Handle other exceptions and send to dead letter queue
             e.printStackTrace();
-            rabbitTemplate.convertAndSend(RabbitMQConfigBinding.DEAD_LETTER_EXCHANGE, "dead_letter", apartamento);
+            rabbitTemplate.convertAndSend(com.example.proyectou2.config.RabbitMQConfigBinding.DEAD_LETTER_EXCHANGE, "dead_letter", apartamento);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error al guardar el apartamento", e);
         }
     }

@@ -2,6 +2,7 @@ package com.example.test.controladores;
 
 import com.example.test.modelos.bloque;
 import com.example.test.servicios.bloqueS;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -34,11 +35,11 @@ public class bloqueC {
     public bloque create(@RequestBody bloque bloque) {
         try {
             if (bloque.getNumeroPisos() < 0) {
-                throw new InvalidPisosException("numeroPisos no puede ser negativo");
+                throw new com.example.proyectou2.excepciones.InvalidPisosException("numeroPisos no puede ser negativo");
             }
             return bloqueS.save(bloque);
-        } catch (InvalidPisosException e) {
-             rabbitTemplate.convertAndSend(RabbitMQConfigBinding.DEAD_LETTER_EXCHANGE, "dead_letter", bloque);
+        } catch (com.example.proyectou2.excepciones.InvalidPisosException e) {
+             rabbitTemplate.convertAndSend(com.example.proyectou2.config.RabbitMQConfigBinding.DEAD_LETTER_EXCHANGE, "dead_letter", bloque);
             throw e;
         }
     }
