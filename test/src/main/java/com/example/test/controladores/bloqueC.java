@@ -17,7 +17,7 @@ public class bloqueC {
 
     @Autowired
     private RabbitTemplate rabbitTemplate;
-    
+
     @GetMapping
     public List<bloque> findAll(){
         return bloqueS.findAll();
@@ -31,9 +31,16 @@ public class bloqueC {
     //http://localhost:8080/apiR/agregarR
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("agregarB")
-    public bloque create (
-            @RequestBody bloque bloque ){
-        return bloqueS.save(bloque);
+    public bloque create(@RequestBody bloque bloque) {
+        try {
+            if (bloque.getNumeroPisos() < 0) {
+                throw new InvalidPisosException("numeroPisos no puede ser negativo");
+            }
+            return bloqueS.save(bloque);
+        } catch (InvalidPisosException e) {
+             rabbitTemplate.convertAndSend(RabbitMQConfigBinding.DEAD_LETTER_EXCHANGE, "dead_letter", bloque);
+            throw e;
+        }
     }
 
     @DeleteMapping("/{id_bloque}")
