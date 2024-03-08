@@ -27,7 +27,6 @@ services:
 # volumes:
 #   odoo-db-data:
 #   odoo-web-data:
-
   rabbitmq:
     container_name: rabbitmq
     image: rabbitmq:3-management
