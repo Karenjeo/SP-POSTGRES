@@ -20,6 +20,9 @@ public class apartamentoC {
     @Autowired
     private apartamentoS apartamentoS;
 
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
+
     @GetMapping
     public List<apartamento> findAll(){
         return apartamentoS.findAll();
