@@ -15,6 +15,9 @@ public class bloqueC {
     @Autowired
     private bloqueS bloqueS;
 
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
+    
     @GetMapping
     public List<bloque> findAll(){
         return bloqueS.findAll();
